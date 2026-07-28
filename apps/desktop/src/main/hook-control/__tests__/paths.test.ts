@@ -43,21 +43,14 @@ describe('isPathWithin', () => {
   });
 
   it('大小写: Windows 不敏感, 其它平台敏感(规则 15)', () => {
-    // 两个分支都要锁住 —— 只在当前平台上跑, 另一半会在重构时悄悄回归
-    const original = process.platform;
-    const setPlatform = (value: NodeJS.Platform): void => {
-      Object.defineProperty(process, 'platform', { value, configurable: true });
-    };
-    try {
-      setPlatform('win32');
+    // node:path 的实现由宿主平台决定，不能只篡改 process.platform 来模拟另一平台；
+    // Windows 与 POSIX 分支分别由对应平台的 CI 覆盖。
+    if (process.platform === 'win32') {
       expect(isPathWithin(BASE, path.join(BASE.toUpperCase(), 'SUB'))).toBe(true);
       expect(isPathWithin(BASE.toUpperCase(), BASE)).toBe(true);
-
-      setPlatform('linux');
+    } else {
       expect(isPathWithin(BASE, path.join(BASE.toUpperCase(), 'SUB'))).toBe(false);
       expect(isPathWithin(BASE.toUpperCase(), BASE)).toBe(false);
-    } finally {
-      setPlatform(original);
     }
   });
 });
